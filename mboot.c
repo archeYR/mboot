@@ -203,9 +203,9 @@ int pack()
 	uint32_t sig_size = 0;
 	void *sig_data = read_file("sig", &sig_size);
 
-	char *required_file[] = { "cmdline.txt", "parameter", "bootstub", "kernel", "ramdisk.cpio.gz" };
-	uint32_t required_size[5];
-	void *required_data[5] = { 0, 0, 0, 0, 0 };
+	char *required_file[] = { "cmdline.txt", "parameter", "bootstub", "font", "kernel", "ramdisk.cpio.gz" };
+	uint32_t required_size[6];
+	void *required_data[6] = { 0, 0, 0, 0, 0, 0 };
 	int i;
 	for (i = 0; i < (sizeof(required_file) / sizeof(required_file[0])); i++) {
 		required_data[i] = read_file(required_file[i], &required_size[i]);
@@ -222,7 +222,7 @@ int pack()
 	}
 
 	// calculate image size and size of padding to next full 512 byte sector
-	int img_size = hdr_size + sig_size + 4096 + required_size[2] + required_size[3] + required_size[4];
+	int img_size = hdr_size + sig_size + 4096 + 8192 + required_size[3] + required_size[4] + required_size[5];
 	int padding_size = 512 - (img_size % 512) < 512 ? 512 - (img_size % 512) : 0;
 
 	unsigned char *bootimg = malloc(img_size + padding_size);
@@ -246,15 +246,16 @@ int pack()
 	}
 
 	// add cmdline, image info (kernel and ramdisk sizes), and parameter to their 4096 byte block
-	memcpy(bootimg + (hdr_size + sig_size), required_data[0], required_size[0]);
-	memcpy(bootimg + (hdr_size + sig_size + 1024), &required_size[3], sizeof(required_size[3]));
-	memcpy(bootimg + (hdr_size + sig_size + 1024 + 4), &required_size[4], sizeof(required_size[4]));
+	memcpy(bootimg + (hdr_size + sig_size + 256), required_data[0], required_size[0]);
+	memcpy(bootimg + (hdr_size + sig_size + 1024), &required_size[4], sizeof(required_size[4]));
+	memcpy(bootimg + (hdr_size + sig_size + 1024 + 4), &required_size[5], sizeof(required_size[5]));
 	memcpy(bootimg + (hdr_size + sig_size + 1024 + 8), required_data[1], required_size[1]);
 
-	// add bootstub, kernel and ramdisk
+	// add bootstub, font, kernel and ramdisk
 	memcpy(bootimg + (hdr_size + sig_size + 4096), required_data[2], required_size[2]);
-	memcpy(bootimg + (hdr_size + sig_size + 4096 + required_size[2]), required_data[3], required_size[3]);
-	memcpy(bootimg + (hdr_size + sig_size + 4096 + required_size[2] + required_size[3]), required_data[4], required_size[4]);
+	memcpy(bootimg + (hdr_size + sig_size + 12288), required_data[3], required_size[3]);
+	memcpy(bootimg + (hdr_size + sig_size + 12288 + required_size[3]), required_data[4], required_size[4]);
+	memcpy(bootimg + (hdr_size + sig_size + 12288 + required_size[3] + required_size[4]), required_data[5], required_size[5]);
 
 	// add trailing padding
 	memset(bootimg + img_size, (int)'\xFF', padding_size);
