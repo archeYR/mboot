@@ -203,7 +203,7 @@ int pack()
 	uint32_t sig_size = 0;
 	void *sig_data = read_file("sig", &sig_size);
 
-	char *required_file[] = { "cmdline.txt", "parameter", "bootstub", "font", "kernel", "ramdisk.cpio.gz" };
+	char *required_file[] = { "cmdline.txt", "parameter", "bootstub", "font", "kernel", "ramdisk" };
 	uint32_t required_size[6];
 	void *required_data[6] = { 0, 0, 0, 0, 0, 0 };
 	int i;
